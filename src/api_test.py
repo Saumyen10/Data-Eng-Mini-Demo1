@@ -13,6 +13,21 @@ import logging
 # print(type(data))       #output = list
 # print(len(data))        #output = 20
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+API_URL = os.getenv("API_URL")
+FILE_URL = os.getenv("FILE_URL")
+
+
+if not API_URL:
+    raise ValueError("API_URL is missing or empty in .env")
+
+if not FILE_URL:
+    raise ValueError("FILE_URL is missing or empty in .env")
+
 
 logging.basicConfig(
     level=logging.INFO,         # Capture INFO, WARNING, ERROR, and CRITICAL
@@ -22,7 +37,7 @@ logging.basicConfig(
 
 def call_api():
     logging.info("Calling API")
-    response = requests.get('https://fakestoreapi.com/products', timeout=(3,5))
+    response = requests.get(API_URL, timeout=(3,5))
     response.raise_for_status()
     data=response.json()
     logging.info(f"API call successful. Number of records: {len(data)}")
@@ -30,7 +45,7 @@ def call_api():
 
 
 def write_file(data):
-    with open('data/raw/products.json','w' ) as f:
+    with open(FILE_URL,'w' ) as f:
         json.dump(data,f, indent=4)
 
     logging.info("Raw data written into file successfully.")

@@ -13,6 +13,8 @@
     a. python
     b. requests
     c. logging
+    d. python-dotenv (for importing environment variables - .env)
+
 
 4. API call is handle like this
 
@@ -160,3 +162,74 @@ try
  └── write_file(data)
         │
         └── save JSON
+
+
+
+Task 3: Make the pipeline maintainable
+
+Now we're going to address something you've already started doing intuitively:
+
+Separate responsibilities.
+
+
+there's still a problem: your code contains the API URL and output path directly inside the functions.
+
+For example:
+
+requests.get('https://fakestoreapi.com/products', ...)
+
+
+Imagine tomorrow the API changes to:
+
+https://some-other-api.com/products
+
+You'd have to edit your source code.
+
+In real projects, we generally want configuration separated from code.
+
+We will use ENVIRONMENT VARIABLES, so eventually we dont wants any secrets to be hardcoded into the code itself.
+
+
+
+Task 3B — Validate the configuration
+
+Before we move toward databases, there's one realistic problem to solve.
+
+Suppose someone accidentally changes .env to:
+
+API_URL=
+FILE_URL=data/raw/products.json
+
+or forgets FILE_URL completely.
+
+Your program shouldn't reach the API and fail later in some confusing way. A good pipeline should fail early and clearly.
+
+Your next task is to add configuration validation.
+
+```
+Ingestion pipeline now:
+
+             .env
+              │
+              ▼
+      Load configuration
+              │
+              ▼
+       Validate config
+              │
+         ┌────┴────┐
+       FAIL       PASS
+         │          │
+         ▼          ▼
+       Stop       API call
+                     │
+                     ▼
+              Error handling
+                     │
+                     ▼
+                JSON parse
+                     │
+                     ▼
+               Raw JSON file
+
+```
