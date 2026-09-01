@@ -14,6 +14,7 @@
     b. requests
     c. logging
     d. python-dotenv (for importing environment variables - .env)
+    e. sqlite3
 
 
 4. API call is handle like this
@@ -233,3 +234,67 @@ Ingestion pipeline now:
                Raw JSON file
 
 ```
+
+
+Task 4 — Introduce a database
+
+
+A JSON file is useful for raw data storage, but imagine we have:
+
+100,000 products
+10 million transactions
+multiple API responses every day
+
+Now we need to:
+
+query records
+filter data
+join datasets
+aggregate data
+enforce structure
+update existing records
+prevent duplicates
+
+That's where a database becomes much more useful.
+
+
+The architecture will become:
+
+Fake Store API
+       ↓
+    Python
+       ↓
+ products.json       ← raw layer
+       ↓
+    SQLite DB        ← structured layer
+       ↓
+      SQL
+
+
+Now project directory:
+
+mini-data-engineering-project/
+│
+├── src/
+│   └── api_test.py
+│
+├── data/
+│   ├── raw/
+│   │   └── products.json
+│   └── database/
+│       └── products.db
+│
+├── .env
+├── .gitignore
+└── README.md
+
+
+---
+UPSERT: not a command in sqlte, combination of INSERT+CONFLICT+UPDATE
+
+| SQL                                    | Meaning                                 |
+| -------------------------------------- | --------------------------------------- |
+| `INSERT`                               | Insert; duplicate primary key → error   |
+| `INSERT OR IGNORE`                     | Insert; duplicate → skip                |
+| `INSERT ... ON CONFLICT ... DO UPDATE` | Insert; duplicate → update (**UPSERT**) |
+
