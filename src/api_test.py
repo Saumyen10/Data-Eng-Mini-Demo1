@@ -80,30 +80,83 @@ def load_to_database(data):
     )
     logging.info("Database table ready.")
 
-    records = [(
-                item['id'],
-                item['title'],
-                item['price'],
-                item['description'],
-                item['category']
-            )
-            for item in data
-    ]
-    cursor.executemany(                                     #INSERT OR IGNORE INTO products
-        """
-            INSERT INTO products (id,title,price,description,category)  
-            VALUES (?,?,?,?,?)
-            ON CONFLICT(id) DO UPDATE SET
-            title = excluded.title,
-            price = excluded.price,
-            description = excluded.description,
-            category = excluded.category
-        """, 
-        records)
+    # records = [(
+    #             item['id'],
+    #             item['title'],
+    #             item['price'],
+    #             item['description'],              #Upsert logic no longer required so commented out the logic
+    #             item['category']
+    #         )
+    #         for item in data
+    # ]
+
+    # cursor.executemany(                                     #INSERT OR IGNORE INTO products
+    #     """
+    #         INSERT INTO products (id,title,price,description,category)  
+    #         VALUES (?,?,?,?,?)
+    #         ON CONFLICT(id) DO UPDATE SET
+    #         title = excluded.title,
+    #         price = excluded.price,
+    #         description = excluded.description,
+    #         category = excluded.category
+    #     """, 
+    #     records)
     connection.commit()
-    logging.info(f"{len(records)} records processed.")
+    # logging.info(f"{len(records)} records processed.")
     connection.close()
 
 
 #call the function
 load_to_database(data)
+
+
+#teporarily changing value to test
+# data[0]['price'] = data[0]['price'] + 10
+
+#function
+def process_records(data):
+    connection = sqlite3.connect(DB_URL)
+    cursor = connection.cursor()
+
+    inserted=0
+    updated=0
+    unchanged=0
+
+    
+    for item in data:
+
+        cursor.execute(
+        "SELECT title, price, description, category FROM products WHERE id = ?",
+            (item['id'],)
+            )
+        existing = cursor.fetchone()
+        new_values = (item['title'], item['price'], item['description'], item['category'])
+
+        if existing is None:
+            insert_values = (item['id'], item['title'], item['price'], item['description'], item['category'])
+            cursor.execute(
+            """
+            INSERT INTO products (id,title,price,description,category)  
+            VALUES (?,?,?,?,?)
+            """, insert_values)
+            inserted+=1
+        elif existing != new_values:
+            update_values = (item['title'], item['price'], item['description'], item['category'], item['id'])
+            cursor.execute(
+            """
+            UPDATE products  
+            SET title=?, price=?, description=?, category=? where id=?
+            """, update_values)
+            updated+=1
+        else:
+            unchanged+=1
+
+    connection.commit()
+    logging.info(f"Inserted: {inserted}")
+    logging.info(f"Updated {updated}")
+    logging.info(f"Unchanged {unchanged}")
+    connection.close()
+
+
+#function call
+process_records(data)

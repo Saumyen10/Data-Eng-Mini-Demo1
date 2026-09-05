@@ -298,3 +298,64 @@ UPSERT: not a command in sqlte, combination of INSERT+CONFLICT+UPDATE
 | `INSERT OR IGNORE`                     | Insert; duplicate → skip                |
 | `INSERT ... ON CONFLICT ... DO UPDATE` | Insert; duplicate → update (**UPSERT**) |
 
+
+----
+
+Task 5 — Detect INSERT, UPDATE, and UNCHANGED records
+
+difference between full & incremental load
+
+although incremental load is better option, fakestoreapi has fixed dataset, so it never changes. So, ultimately acts like a rigid database.
+
+upsert doesnt verify if "Did the incoming record actually differ from the existing record?"
+
+Create a new function called def process_records(data):
+    NEW
+     CHANGED
+     UNCHANGED
+
+
+For each item from the API:
+
+Does its ID exist in database?
+        │
+       NO
+        ↓
+      NEW
+        ↓
+     INSERT
+
+
+       YES
+        ↓
+Compare:
+     title
+     price
+     description
+     category
+        │
+   ┌────┴────┐
+same       different
+  ↓            ↓
+UNCHANGED    CHANGED
+               ↓
+             UPDATE
+
+             
+Pipeline goal:
+                       API
+                        ↓
+                    call_api()
+                        ↓
+              ┌─────────┴─────────┐
+              ↓                   ↓
+        raw JSON file       process_records()
+                                  ↓
+                     ┌────────────┼────────────┐
+                     ↓            ↓            ↓
+                   NEW        CHANGED      UNCHANGED
+                     ↓            ↓            ↓
+                  INSERT        UPDATE       NOTHING
+                     └────────────┬────────────┘
+                                  ↓
+                              SQLite DB
