@@ -1,8 +1,9 @@
 /src/test.py
+/src/api_test.py
 
 .env
 .venv
 
-NOTES.md
+__pycache__
 
-requirements.txt
+NOTES.md

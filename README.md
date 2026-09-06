@@ -454,3 +454,115 @@ Transformation logic:
         ↓
     dim_product
     (product_id, product_name, category, price, rating)
+
+
+Task 7 — Refactor the project
+
+```
+Your current project is probably roughly:
+
+mini-data-engineering-project/
+│
+├── src/
+│   └── api_test.py
+│
+├── data/
+│   ├── raw/
+│   │   └── products.json
+│   └── database/
+│       └── products.db
+│
+├── .env
+├── .gitignore
+└── README.md
+```
+
+And api_test.py contains everything:
+
+configuration
+logging
+API call
+raw-file writing
+database creation
+staging loading
+change detection
+curated transformation
+
+That is becoming too much for one file.
+
+```
+We want to move toward:
+
+mini-data-engineering-project/
+│
+├── src/
+│   ├── config.py
+│   ├── logger.py
+│   ├── api/
+│   │   └── client.py
+│   │
+│   ├── storage/
+│   │   ├── raw.py
+│   │   └── database.py
+│   │
+│   ├── transformation/
+│   │   └── curated.py
+│   │
+│   └── main.py
+│
+├── data/
+│   ├── raw/
+│   │   └── products.json
+│   └── database/
+│       └── products.db
+│
+├── .env
+├── .gitignore
+├── requirements.txt
+└── README.md
+
+```
+
+
+config.py:
+     .env
+     ↓
+     config.py
+     ↓
+     API_URL / FILE_URL / DB_URL
+     ↓
+     other modules
+
+
+Change:
+
+1. process_records() should work with stg_products
+
+Your current process_records() was originally designed around:
+     products
+
+Change its target/reference to:
+     stg_products
+
+
+Also remove the function: process_records(data)
+
+
+o we can simplify the pipeline to:
+
+API
+ ↓
+call_api()
+ ↓
+write raw JSON
+ ↓
+load_staging_data()
+     ↓
+     INSERT new
+     UPDATE existing
+ ↓
+stg_products
+ ↓
+transform_staging_to_curated()
+ ↓
+dim_product
