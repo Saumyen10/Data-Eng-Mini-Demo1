@@ -359,3 +359,98 @@ Pipeline goal:
                      └────────────┬────────────┘
                                   ↓
                               SQLite DB
+
+
+
+TASK 6: Data Layers
+
+We'll introduce the idea of:
+     RAW → STAGING → CURATED
+
+Raw layer: preserve what the source gave you. Principle: Store the source data as close to the original form as practical. 
+     e.g. data/raw/products.json
+
+Staging layer: clean, standardize, type-convert, validate. We start making the source data usable.
+     e.g. "Electronics" → "electronics"
+
+Curated layer: data shaped for business/analytics use. It is no longer simply "whatever the API sent."
+     e.g. "id" → "product_id" 
+
+Right now you have:
+
+API
+ ↓
+products.json
+ ↓
+products table
+
+We're going to separate the data into logical layers:
+
+API
+ ↓
+RAW
+ ↓
+STAGING
+ ↓
+CURATED
+
+
+**Note:** Why not just one table? "Why don't we just clean the API data and put it directly into products?"
+
+
+Because separating layers gives you:
+
+1. Traceability -
+Where did this value come from?
+You can trace: Curated → Staging → Raw → API
+
+2. Recovery -
+
+Suppose your transformation code has a bug. You don't necessarily need to call the API again.
+You still have: raw/products.json
+
+3. Different consumers
+
+Raw data is useful for engineers.
+Staging is useful for transformation.
+Curated data is useful for analysts/business users.
+
+
+---
+
+Create tables:
+
+create_staging_table()
+        ↓
+load_staging_data()
+        ↓
+transform_to_curated()
+
+---
+New pipeline:
+
+                     API
+                      ↓
+                   Python
+                      ↓
+              products.json
+                 (RAW)
+                      ↓
+                stg_products
+                (STAGING)
+                      ↓
+             transform_to_curated()
+                      ↓
+                dim_product
+                (CURATED)
+
+
+Staging-> Curated:
+
+Transformation logic:
+    stg_products
+        ↓ SELECT
+    (id, title, category, price, rating_rate)
+        ↓
+    dim_product
+    (product_id, product_name, category, price, rating)

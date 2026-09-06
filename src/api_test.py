@@ -107,7 +107,7 @@ def load_to_database(data):
 
 
 #call the function
-load_to_database(data)
+# load_to_database(data)
 
 
 #teporarily changing value to test
@@ -159,4 +159,133 @@ def process_records(data):
 
 
 #function call
-process_records(data)
+# process_records(data)
+
+
+#Task 6: Staging table
+
+def create_stagingtable():
+    connection = sqlite3.connect(DB_URL)
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS stg_products (
+           id INTEGER PRIMARY KEY,
+            title TEXT,
+            price REAL,
+            description TEXT,
+            category TEXT,
+            image TEXT,
+            rating_rate REAL,
+            rating_count INTEGER
+        )
+        """
+    )
+    logging.info("Staging table ready.")
+    connection.commit()
+    connection.close()
+
+#Staging Load function
+def load_stagingdata(data):
+    connection = sqlite3.connect(DB_URL)
+    cursor = connection.cursor()
+    records = [(
+                item['id'],
+                item['title'],
+                item['price'],
+                item['description'],              
+                item['category'],
+                item['image'],
+                item['rating']['rate'],     #since nested in rating
+                # item['rating']['count']
+                # item.get('rating', {}).get('rate')    #another  way to do it
+                item.get('rating', {}).get('count')
+                
+            )
+            for item in data
+    ]
+    logging.info(f"Records prepared for staging: {len(records)}")
+    cursor.executemany(                                  
+        """
+            INSERT INTO stg_products (id,title,price,description,category,image,rating_rate,rating_count)  
+            VALUES (?,?,?,?,?,?,?,?)
+            ON CONFLICT(id) DO UPDATE SET
+            title = excluded.title,
+            price = excluded.price,
+            description = excluded.description,
+            category = excluded.category,
+            image = excluded.image,
+            rating_rate = excluded.rating_rate,
+            rating_count = excluded.rating_count
+        """, 
+        records)
+    connection.commit()
+    logging.info("Staging data loaded successfully.")
+    connection.close()
+
+
+create_stagingtable()
+load_stagingdata(data)
+
+
+# connection = sqlite3.connect(DB_URL)
+# cursor = connection.cursor()
+
+# cursor.execute("SELECT COUNT(*) FROM stg_products")
+# count = cursor.fetchone()[0]
+
+# print("Rows in stg_products:", count)
+
+# connection.close()
+
+
+#function: Curated Table
+def create_curatedtable():
+    connection = sqlite3.connect(DB_URL)
+    cursor = connection.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS dim_product (
+            product_id INTEGER PRIMARY KEY,
+            product_name TEXT,
+            category TEXT,
+            price REAL,
+            rating REAL
+        )
+        """
+    )
+    logging.info("Curated table ready.")
+    connection.commit()
+    connection.close()
+
+
+create_curatedtable()
+
+#transformation: Staging -> Curated
+def transform_staging_to_curated():
+    connection = sqlite3.connect(DB_URL)
+    cursor = connection.cursor()
+
+    cursor.execute(
+    "SELECT id, title, category, price, rating_rate FROM stg_products"
+    )
+    staged_data = cursor.fetchall()
+    
+    logging.info(f"Records prepared for curated table: {len(staged_data)}")
+    cursor.executemany(                                  
+        """
+            INSERT INTO dim_product (product_id,product_name,category,price,rating)  
+            VALUES (?,?,?,?,?)
+            ON CONFLICT(product_id) DO UPDATE SET
+            product_name = excluded.product_name,
+            category = excluded.category,
+            price = excluded.price,
+            rating = excluded.rating
+        """, 
+        staged_data)
+    connection.commit()
+    logging.info("Curated data loaded successfully.")
+    connection.close()
+
+transform_staging_to_curated()
