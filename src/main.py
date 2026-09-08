@@ -1,10 +1,10 @@
-from api.client import call_api
-from storage.raw import write_file
-from storage.database import create_staging_table, load_staging_data
-from transformation.curated import create_curated_table
-from transformation.curated import transform_staging_to_curated
+from src.api.client import call_api
+from src.storage.raw import write_file
+from src.storage.database import create_staging_table, load_staging_data
+from src.transformation.curated import create_curated_table
+from src.transformation.curated import transform_staging_to_curated
 
-import logger
+import src.logger
 import logging
 import requests
 

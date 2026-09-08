@@ -548,7 +548,7 @@ Change its target/reference to:
 Also remove the function: process_records(data)
 
 
-o we can simplify the pipeline to:
+So we can simplify the pipeline to:
 
 API
  ↓
@@ -566,3 +566,65 @@ stg_products
 transform_staging_to_curated()
  ↓
 dim_product
+
+
+Task 8 — Data Quality & Validation
+
+Our pipeline currently looks like:
+
+API
+ ↓
+Raw JSON
+ ↓
+Staging
+ ↓
+Curated
+
+We're going to make it:
+
+API
+ ↓
+Raw JSON
+ ↓
+VALIDATE
+ ↓
+Staging
+ ↓
+VALIDATE
+ ↓
+Curated
+
+The basic principle is:
+Don't allow bad data to silently enter the next layer.
+
+Data Quality ----
+
+Data quality is about whether your data is fit for its intended use — accurate, reliable, and trustworthy enough that decisions or downstream systems can depend on it without silently producing wrong results.
+A pipeline can run perfectly (no crashes, no exceptions, all your try/except blocks pass) and still produce garbage if the data itself is bad. 
+
+**Note:** This is exactly why "it ran successfully" and "the data is good" are two separate questions.
+
+Dimensions:
+
+For our project, focus mainly on:
+     Completeness + Validity + Uniqueness + Consistency.
+
+1. Completeness: Are all the required fields actually present? Missing values, nulls, or empty strings where real data should be.
+
+2. Validity: Does the data conform to expected format, type, or range? A field can be present (satisfying completeness) but still be invalid.
+
+3. Uniqueness: Are there duplicate records that shouldn't exist? PRIMARY KEY constraint is a uniqueness enforcement mechanism.
+
+4. Consistency: Does data agree with itself — across records, across time, or across related tables/sources? This is often the subtlest dimension because each individual value might look "valid" in isolation, but something's contradictory when compared.
+
+
+Task 8A:  Validate the API response
+
+The responsibility of data_quality.py will be:
+     Check whether incoming API records satisfy our basic data-quality rules
+
+Rules: 
+     ID, Title, Category, Price, Rating must exist
+     Price must be numeric, cannot be negative
+     Rating should be valid
+     ID must be unique

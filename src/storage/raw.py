@@ -1,7 +1,7 @@
 import json
 import logging
 
-from config import FILE_URL
+from src.config import FILE_URL
 
 #Function: insert raw data directly from API into file(products.json)
 def write_file(data):

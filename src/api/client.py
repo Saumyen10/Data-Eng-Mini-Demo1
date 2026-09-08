@@ -1,7 +1,7 @@
 import requests
 import logging
 
-from config import API_URL
+from src.config import API_URL
 
 #Function to call API
 def call_api():

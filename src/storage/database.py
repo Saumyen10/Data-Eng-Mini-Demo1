@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 
-from config import DB_URL
+from src.config import DB_URL
 
 #Function: Staging Table
 def create_staging_table():

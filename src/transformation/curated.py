@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 
-from config import DB_URL
+from src.config import DB_URL
 
 #function: Curated Table
 def create_curated_table():
