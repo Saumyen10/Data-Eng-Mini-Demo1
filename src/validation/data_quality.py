@@ -19,16 +19,16 @@ def validate_records(data):
             seen_ids.add(id_)
 
         title = record.get('title')
-        if title is None:               #title must be present
+        if title is None:                   #title must be present
             errors.append("Missing Title")
 
         category = record.get('category')
-        if category is None:               #Category must be present
+        if category is None:                #Category must be present
             errors.append("Missing Category")
 
 
         price = record.get('price')
-        if price is None:        #price must be present & positive & numeric
+        if price is None:                   #price must be present & positive & numeric
             errors.append("Invalid price: Missing ")
         elif not isinstance(price, (int, float)):     
             errors.append("Invalid price: not Numeric")
@@ -38,7 +38,7 @@ def validate_records(data):
                      
 
         rating = record.get('rating', {}).get('rate')
-        if rating is None:              #rating:must be present & numeric & btn 0-5  
+        if rating is None:                  #rating:must be present & numeric & btn 0-5  
             errors.append("Invalid rating: Missing")
         elif not isinstance(rating, (int, float)):     
             errors.append("Invalid rating: not Numeric")

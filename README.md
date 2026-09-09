@@ -628,3 +628,100 @@ Rules:
      Price must be numeric, cannot be negative
      Rating should be valid
      ID must be unique
+
+
+The function must perform:
+        # ID check
+        # title check
+        # category check
+        # price check
+        # rating check
+        # duplicate check
+
+
+Now pipeline looks:
+
+
+              API
+               │
+               ▼
+          call_api()
+               │
+               ▼
+         RAW JSON FILE
+               │
+               ▼
+        validate_records()
+          /           \
+         /             \
+      VALID           INVALID
+        │                │
+        ▼                ▼
+   STAGING DB       REJECTED JSON
+        │
+        ▼
+     CURATED
+
+
+Task 8B — Integrate validation into the pipeline + quarantine invalid records.
+
+
+The important design decision is:
+     Save raw data first, validate second.
+
+So even invalid data remains available in the raw snapshot for debugging.
+
+---- 
+
+We don't want:
+
+API
+ ↓
+STAGING
+ ↓
+VALIDATION
+
+because bad records have already entered our staging layer.
+
+We want:
+
+API
+ ↓
+RAW
+ ↓
+VALIDATION
+ ↓
+only valid data → STAGING
+
+
+for testing purposes, in main.py added:
+       data = call_api()
+
+        data[0]["price"] = -50  #testing purposes
+        write_file(data)
+
+which lead to: 19 files in both tables of products.db & products.json
+
+1 file in raw/invalid_products.json:
+
+[
+    {
+        "record": {
+            "id": 1,
+            "title": "Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops",
+            "price": -50,
+            "description": "Your perfect pack for everyday use and walks in the forest. Stash your laptop (up to 15 inches) in the padded sleeve, your everyday",
+            "category": "men's clothing",
+            "image": "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_t.png",
+            "rating": {
+                "rate": 3.9,
+                "count": 120
+            }
+        },
+        "errors": [
+            "Invalid price: Negative"
+        ]
+    }
+]
+
+Now, will remove the testing part, but will keep: invalid_products.json as learning purposes
