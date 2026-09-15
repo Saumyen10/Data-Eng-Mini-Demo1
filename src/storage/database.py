@@ -1,11 +1,12 @@
 import sqlite3
 import logging
 
-from config import DB_URL
+from src.config import DB_URL
 
 #Function: Staging Table
-def create_staging_table():
-    connection = sqlite3.connect(DB_URL)
+def create_staging_table(db_url=DB_URL):
+    # connection = sqlite3.connect(DB_URL)
+    connection = sqlite3.connect(db_url)
     cursor = connection.cursor()
 
     cursor.execute(
@@ -29,8 +30,9 @@ def create_staging_table():
 
 
 #Function: Load Staging Table
-def load_staging_data(data):
-    connection = sqlite3.connect(DB_URL)
+def load_staging_data(data, db_url=DB_URL):
+    # connection = sqlite3.connect(DB_URL)
+    connection = sqlite3.connect(db_url)
     cursor = connection.cursor()
     records = [(
                 item['id'],
