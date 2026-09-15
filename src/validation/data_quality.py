@@ -29,7 +29,7 @@ def validate_records(data):
 
         price = record.get('price')
         if price is None:                   #price must be present & positive & numeric
-            errors.append("Invalid price: Missing ")
+            errors.append("Invalid price: Missing")
         elif not isinstance(price, (int, float)):     
             errors.append("Invalid price: not Numeric")
         elif price < 0:

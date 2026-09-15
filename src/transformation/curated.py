@@ -4,8 +4,9 @@ import logging
 from src.config import DB_URL
 
 #function: Curated Table
-def create_curated_table():
-    connection = sqlite3.connect(DB_URL)
+def create_curated_table(db_url=DB_URL):
+    # connection = sqlite3.connect(DB_URL)
+    connection = sqlite3.connect(db_url)
     cursor = connection.cursor()
     cursor.execute(
         """
@@ -23,8 +24,9 @@ def create_curated_table():
     connection.close()
 
 #function: transformation: Staging -> Curated
-def transform_staging_to_curated():
-    connection = sqlite3.connect(DB_URL)
+def transform_staging_to_curated(db_url=DB_URL):
+    # connection = sqlite3.connect(DB_URL)
+    connection = sqlite3.connect(db_url)
     cursor = connection.cursor()
 
     cursor.execute(

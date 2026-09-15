@@ -725,3 +725,246 @@ which lead to: 19 files in both tables of products.db & products.json
 ]
 
 Now, will remove the testing part, but will keep: invalid_products.json as learning purposes
+
+
+
+Task 9: Automated Testing
+
+
+We now want the computer to verify the behavior for us.
+
+The goal is:
+
+Code changes
+     ↓
+Run tests
+     ↓
+PASS / FAIL
+
+     rather than manually checking:
+
+"Did it insert 20?"
+"Did the invalid record get rejected?"
+"Did the database update correctly?"
+
+
+Why automated testing, conceptually
+
+Everything you've done so far — printing counts, eyeballing output, manually forcing a 404, manually corrupting a record to test validation — has been manual verification. It works, but you have to remember to do it, you do it once, and nothing stops a future code change from silently breaking something you already fixed. Automated tests turn those manual checks into code that runs itself, repeatedly, forever, and tells you immediately if something breaks.
+
+
+Task 9A — Test validate_records()
+
+Create something conceptually like:
+
+def test_valid_records():
+    ...
+
+The test should:
+
+Get your normal API data or use a small test dataset.
+Call:
+validate_records(data)
+Assert:
+20 valid
+0 invalid
+
+Instead of:
+
+print(...)
+
+you'll do something like:
+
+assert len(valid) == 20
+assert len(invalid) == 0
+
+
+Eventually you have to create these functions:
+     test_valid_records
+     test_negative_price
+     test_missing_title
+     test_invalid_rating
+
+
+You asked:
+
+"So, we will be calling API for every individual function separately?"
+
+For your current version, yes. But I don't recommend keeping it that way.
+
+Imagine you eventually have 50 tests.
+
+Your test suite would do:
+
+Test 1 → API call
+Test 2 → API call
+Test 3 → API call
+...
+Test 50 → API call
+
+That's undesirable because:
+
+it's slower
+it depends on internet/API availability
+the API data could change
+the API could rate-limit you
+a failing API can make unrelated tests fail
+
+This is exactly why we said earlier:
+
+Automated tests should generally not depend on live external systems.
+
+Better approach
+
+Create a small fixed test dataset inside your tests. e. sample_data = []
+
+
+Then:
+
+test_valid_records
+    ↓
+sample_data
+
+test_negative_price
+    ↓
+deepcopy(sample_data)
+    ↓
+modify price
+
+test_missing_title
+    ↓
+deepcopy(sample_data)
+    ↓
+modify title
+
+test_invalid_rating
+    ↓
+deepcopy(sample_data)
+    ↓
+modify rating
+
+
+Now your tests are:
+
+     fast
+     repeatable
+     offline
+     predictable
+
+
+Task 9B — Pytest fixtures
+
+Now we'll improve the tests rather than immediately adding more.
+
+You currently repeat this dataset setup conceptually across the tests:
+
+test_data = copy.deepcopy(sample_data)
+
+Pytest fixtures let us define reusable test data/setup once and inject it into tests.
+
+ Create tests/conftest.py:
+
+     move the sample_data code to conftest.py & create a fixture -
+
+     import pytest
+
+
+@pytest.fixture
+def sample_data():
+    return [ {}, {}  ]
+
+
+Task 9C: all validation tests
+
+1. Missing ID
+2. Duplicate ID
+3. Missing category
+4. Missing price
+5. Non-numeric price
+6. Missing rating
+7. Non-numeric rating
+
+
+Task 9D: Database Integration Test
+
+D.1:
+Changed required functions to following format - 
+
+```
+def create_curated_table(db_url=DB_URL):
+    # connection = sqlite3.connect(DB_URL)
+    connection = sqlite3.connect(db_url)
+```
+
+
+def create_staging_table(db_url=DB_URL):
+    ...
+
+def load_staging_data(data, db_url=DB_URL):
+    ...
+
+def create_curated_table(db_url=DB_URL):
+    ...
+
+def transform_staging_to_curated(db_url=DB_URL):
+    ...
+
+For the functions that receive data, keep data first and db_url second. That gives us clean calls such as:
+
+     load_staging_data(sample_data, str(test_db))
+
+
+What this test does:
+
+sample_data
+    ↓
+temporary test.db
+    ↓
+create stg_products
+    ↓
+load_staging_data()
+    ↓
+SELECT COUNT(*)
+    ↓
+assert 2
+
+Your actual:
+
+     data/database/products.db
+
+is never touched.
+
+
+Task 9D.2 — Test the curated transformation
+
+We want to automatically verify that your transformation logic works.
+
+Test 1 — Staging records become curated records
+
+Create another test in tests/test_database.py:
+
+def test_transform_staging_to_curated(sample_data, tmp_path):
+    ...
+
+The flow should be:
+
+temporary DB
+      ↓
+create staging table
+      ↓
+load sample_data
+      ↓
+create curated table
+      ↓
+transform staging → curated
+      ↓
+SELECT from dim_product
+      ↓
+assert results
+
+
+
+Task 9A — Validation unit tests        ✅
+Task 9B — Staging integration tests   ✅
+Task 9C — Curated integration tests   ✅
+Task 9D — Validation → curated flow   ✅
